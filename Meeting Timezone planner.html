@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nexio meeting planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#22305D; --pink:#D3045E; --orange:#F08900;
+  --bg:#F5F6FA; --surface:#FFFFFF; --ink:#22305D; --muted:#7A82A0; --line:#E6E8F0; --soft:#F1F3F8;
+  --work:#3A4C8C; --shoulder:#F6D7AE; --off:#ECEEF4; --hatch:rgba(34,48,93,.10);
+  --band:rgba(211,4,94,.10); --bar:#C3CAE2;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#10152A; --surface:#181F3B; --ink:#E7EAF6; --muted:#8F98BB; --line:#262E52; --soft:#1F2748;
+    --work:#5367B8; --shoulder:#6C4A1C; --off:#222A4B; --hatch:rgba(255,255,255,.08);
+    --band:rgba(255,64,140,.16); --bar:#3C4A7E;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#10152A; --surface:#181F3B; --ink:#E7EAF6; --muted:#8F98BB; --line:#262E52; --soft:#1F2748;
+  --work:#5367B8; --shoulder:#6C4A1C; --off:#222A4B; --hatch:rgba(255,255,255,.08);
+  --band:rgba(255,64,140,.16); --bar:#3C4A7E;
+}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Instrument Sans',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;font-variant-numeric:tabular-nums;line-height:1.45}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+.wrap{max-width:1120px;margin:0 auto;padding:40px 20px 64px}
+
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;margin-bottom:24px}
+h1{font-size:1.75rem;margin:0;letter-spacing:-.02em;font-weight:700}
+.sub{margin:4px 0 0;color:var(--muted);font-size:.95rem}
+.datenav{display:flex;align-items:center;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px}
+.datenav button,.datenav input{border:0;background:transparent;padding:6px 10px;border-radius:8px;cursor:pointer}
+.datenav button:hover{background:var(--soft)}
+.datenav .sep{width:1px;height:20px;background:var(--line);margin:0 4px}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:20px}
+.main{padding:20px 24px 18px}
+.toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:8px}
+.field{display:inline-flex;align-items:center;gap:8px;font-size:.88rem;color:var(--muted)}
+.field select{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:5px 8px;color:var(--ink);cursor:pointer}
+.seg{display:inline-flex;background:var(--soft);border-radius:9px;padding:3px}
+.seg button{border:0;background:transparent;padding:4px 11px;border-radius:7px;cursor:pointer;color:var(--muted);font-size:.88rem}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(34,48,93,.12)}
+.spacer{flex:1}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:7px 14px;cursor:pointer;font-size:.9rem}
+.btn:hover{border-color:var(--muted)}
+.btn[aria-expanded="true"]{background:var(--soft)}
+.btn.primary{background:var(--pink);border-color:var(--pink);color:#fff;font-weight:600}
+.btn.primary:hover{filter:brightness(1.08)}
+
+.scroller{overflow-x:auto;padding-top:34px}
+.grid{--lw:210px;position:relative;min-width:720px;display:grid;grid-template-columns:var(--lw) 1fr;row-gap:10px;user-select:none;-webkit-user-select:none}
+.label{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-right:18px;min-width:0}
+.label b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.label .now{text-align:right;white-space:nowrap}
+.label .t{font-weight:600}
+.label .d{font-size:.78rem;color:var(--muted);margin-left:6px}
+.label .d.shift{color:var(--pink)}
+.label .x{border:0;background:transparent;color:var(--muted);cursor:pointer;width:22px;height:22px;border-radius:6px;font-size:1rem;line-height:1;padding:0;flex:none;opacity:0;transition:opacity .15s}
+.label:hover .x,.label .x:focus-visible{opacity:1}
+.label .x:hover{color:var(--pink);background:var(--soft)}
+@media (hover:none){.label .x{opacity:.6}}
+.label .nm{display:flex;align-items:center;gap:2px;min-width:0}
+.addbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:16px}
+.addbar input{flex:1;min-width:200px;max-width:340px;border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:7px 12px}
+.addbar .hint{font-size:.8rem;color:var(--muted)}
+
+.track{position:relative;display:flex;height:32px;border-radius:8px;overflow:hidden;cursor:ew-resize;touch-action:none}
+.slot{flex:1;position:relative}
+.slot.work{background:var(--work)}
+.slot.shoulder{background:var(--shoulder)}
+.slot.off{background:var(--off)}
+.slot.weekend{background:var(--off);background-image:repeating-linear-gradient(135deg,transparent 0 5px,var(--hatch) 5px 8px)}
+.slot.daystart::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--surface);opacity:.9}
+
+.ruler{height:18px;overflow:visible;cursor:ew-resize}
+.ruler .hr{position:absolute;left:0;transform:translateX(-50%);font-size:.72rem;color:var(--muted);white-space:nowrap}
+.ruler .slot:first-child .hr{transform:none}
+.rlabel{font-size:.78rem;color:var(--muted);align-self:center;padding-right:18px}
+.overlap{height:22px;align-items:flex-end;margin-top:4px}
+.overlap .slot{height:100%;display:flex;align-items:flex-end;padding:0 1px}
+.overlap .bar{width:100%;background:var(--bar);border-radius:2px}
+.overlap .bar.all{background:var(--orange)}
+
+.overlay{position:absolute;inset:0;pointer-events:none}
+.band{position:absolute;top:-6px;bottom:0;left:calc(var(--lw) + (100% - var(--lw)) * var(--p));width:calc((100% - var(--lw)) * var(--w));background:var(--band);border-left:2px solid var(--pink);border-radius:0 6px 6px 0}
+.pill{position:absolute;top:-30px;left:-2px;background:var(--pink);color:#fff;font-size:.78rem;font-weight:600;padding:3px 10px;border-radius:99px;white-space:nowrap;pointer-events:auto;cursor:grab;border:0;touch-action:none}
+.pill:active{cursor:grabbing}
+
+.legend{display:flex;flex-wrap:wrap;gap:18px;margin-top:18px;font-size:.8rem;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:14px;height:10px;border-radius:3px;display:inline-block}
+.sw.work{background:var(--work)} .sw.shoulder{background:var(--shoulder)} .sw.off{background:var(--off);border:1px solid var(--line)}
+.sw.weekend{background:var(--off);background-image:repeating-linear-gradient(135deg,transparent 0 3px,var(--hatch) 3px 5px);border:1px solid var(--line)}
+.sw.all{background:var(--orange)}
+
+/* working hours panel */
+.hours{border-top:1px solid var(--line);padding:20px 24px 22px}
+.hours[hidden]{display:none}
+.hours h2{font-size:1rem;margin:0 0 2px}
+.hours p{margin:0 0 14px;color:var(--muted);font-size:.85rem}
+.ht{width:100%;border-collapse:collapse;font-size:.9rem}
+.ht th{text-align:left;font-weight:500;color:var(--muted);font-size:.78rem;padding:0 8px 8px 0}
+.ht td{padding:8px 8px 8px 0;border-top:1px solid var(--line);vertical-align:middle}
+.ht select{border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:4px 6px;cursor:pointer}
+.ht .loc b{font-weight:600} .ht .loc small{color:var(--muted);margin-left:6px}
+.days{display:inline-flex;gap:3px}
+.days button{width:28px;height:28px;border-radius:50%;border:1px solid var(--line);background:transparent;cursor:pointer;font-size:.72rem;color:var(--muted);padding:0}
+.days button[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
+.switch{width:34px;height:20px;border-radius:99px;border:0;background:var(--line);position:relative;cursor:pointer;padding:0}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#fff;transition:left .15s}
+.switch[aria-checked="true"]{background:var(--pink)}
+.switch[aria-checked="true"]::after{left:17px}
+.rm{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:.85rem;padding:4px 6px;border-radius:6px}
+.rm:hover{color:var(--pink)}
+.addrow{display:flex;align-items:center;gap:10px;margin-top:14px;font-size:.88rem;color:var(--muted)}
+.addrow select{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:5px 8px;color:var(--ink);cursor:pointer}
+
+.summary{display:grid;grid-template-columns:1.5fr 1fr;gap:18px;margin-top:18px}
+.summary .card{padding:20px 24px}
+.summary h2{font-size:1rem;margin:0 0 2px}
+.verdict{margin:0 0 12px;color:var(--muted);font-size:.9rem}
+.verdict strong{color:var(--ink);font-weight:600}
+.mt{width:100%;border-collapse:collapse;font-size:.92rem}
+.mt td{padding:8px 0;border-top:1px solid var(--line)}
+.mt td:nth-child(2){font-weight:600;white-space:nowrap;padding-left:10px}
+.mt td:last-child{text-align:right;padding-left:10px;white-space:nowrap}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:1px}
+.dot.ok{background:var(--work)} .dot.edge{background:var(--orange)} .dot.night{background:var(--muted)} .dot.weekend{background:var(--pink)}
+.st{font-size:.8rem;color:var(--muted)}
+textarea{width:100%;min-height:140px;border:1px solid var(--line);border-radius:10px;background:var(--soft);color:var(--ink);padding:10px 12px;font:inherit;font-size:.84rem;resize:vertical;margin:8px 0 10px}
+.copyrow{display:flex;align-items:center;gap:12px}
+.toast{font-size:.85rem;color:var(--pink);margin:0}
+
+@media (max-width:820px){
+  .summary{grid-template-columns:1fr}
+  .grid{--lw:160px;min-width:640px}
+  .main,.hours{padding-left:16px;padding-right:16px}
+  .ht .hide-sm{display:none}
+}
+@media (prefers-reduced-motion:reduce){.switch::after{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Meeting planner</h1>
+      <p class="sub">Drag the pink marker to pick a time. Each row is that location's own day.</p>
+    </div>
+    <div class="datenav">
+      <button id="prevDay" aria-label="Previous day">‹</button>
+      <input type="date" id="date" aria-label="Meeting date">
+      <button id="nextDay" aria-label="Next day">›</button>
+      <span class="sep"></span>
+      <button id="nowBtn">Now</button>
+    </div>
+  </header>
+
+  <div class="card">
+    <div class="main">
+      <div class="toolbar">
+        <label class="field">Plan in <select id="base"></select></label>
+        <div class="seg" role="group" aria-label="Meeting length" id="dur">
+          <button data-d="30">30m</button><button data-d="60">1h</button><button data-d="90">1.5h</button><button data-d="120">2h</button>
+        </div>
+        <div class="seg" role="group" aria-label="Clock format" id="clock">
+          <button data-c="24">24h</button><button data-c="12">12h</button>
+        </div>
+        <span class="spacer"></span>
+        <button class="btn" id="hoursBtn" aria-expanded="false" aria-controls="hours">Working hours</button>
+        <button class="btn primary" id="bestBtn">Find best time</button>
+      </div>
+      <div class="scroller"><div class="grid" id="grid"></div></div>
+      <form class="addbar" id="addForm" autocomplete="off">
+        <input id="addInput" list="zonelist" placeholder="Add a location, e.g. Madrid or Asia/Tokyo" aria-label="Add a location">
+        <datalist id="zonelist"></datalist>
+        <button class="btn" type="submit">Add</button>
+        <span class="hint" id="addHint"></span>
+      </form>
+      <div class="legend" aria-label="Legend">
+        <span><i class="sw work"></i>Working hours</span>
+        <span><i class="sw shoulder"></i>Early or late</span>
+        <span><i class="sw off"></i>Outside hours</span>
+        <span><i class="sw weekend"></i>Weekend</span>
+        <span><i class="sw all"></i>Everyone working</span>
+      </div>
+    </div>
+
+    <section class="hours" id="hours" hidden>
+      <h2>Working hours by location</h2>
+      <p>Set each location's normal day and weekend. Switch a location off to hide it without removing it.</p>
+      <table class="ht">
+        <thead><tr><th>Include</th><th>Location</th><th>Starts</th><th>Ends</th><th class="hide-sm">Weekend</th><th></th></tr></thead>
+        <tbody id="htbody"></tbody>
+      </table>
+    </section>
+  </div>
+
+  <div class="summary">
+    <div class="card">
+      <h2 id="mtitle">Meeting</h2>
+      <p class="verdict" id="verdict"></p>
+      <table class="mt"><tbody id="mtable"></tbody></table>
+    </div>
+    <div class="card">
+      <h2>Share</h2>
+      <textarea id="copytext" readonly aria-label="Meeting times to copy"></textarea>
+      <div class="copyrow">
+        <button class="btn primary" id="copyBtn">Copy meeting times</button>
+        <p class="toast" id="toast" role="status"></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+const $ = s => document.querySelector(s);
+const WD = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const DAY_ORDER = [1,2,3,4,5,6,0];
+const SS = [0,6];
+const CATALOG = [
+  {id:'la', name:'US Pacific',  city:'Los Angeles', tz:'America/Los_Angeles', weekend:SS},
+  {id:'ny', name:'US Eastern',  city:'New York',    tz:'America/New_York',    weekend:SS},
+  {id:'ie', name:'Ireland',     city:'Dublin',      tz:'Europe/Dublin',       weekend:SS},
+  {id:'pl', name:'Poland',      city:'Warsaw',      tz:'Europe/Warsaw',       weekend:SS},
+  {id:'eg', name:'Egypt',       city:'Cairo',       tz:'Africa/Cairo',        weekend:[5,6]},
+  {id:'ph', name:'Philippines', city:'Manila',      tz:'Asia/Manila',         weekend:SS},
+  {id:'ct', name:'US Central',  city:'Chicago',     tz:'America/Chicago',     weekend:SS},
+  {id:'mt', name:'US Mountain', city:'Denver',      tz:'America/Denver',      weekend:SS},
+  {id:'uk', name:'United Kingdom', city:'London',   tz:'Europe/London',       weekend:SS},
+  {id:'de', name:'Germany',     city:'Berlin',      tz:'Europe/Berlin',       weekend:SS},
+  {id:'es', name:'Spain',       city:'Madrid',      tz:'Europe/Madrid',       weekend:SS},
+  {id:'ae', name:'UAE',         city:'Dubai',       tz:'Asia/Dubai',          weekend:SS},
+  {id:'sa', name:'Saudi Arabia',city:'Riyadh',      tz:'Asia/Riyadh',         weekend:[5,6]},
+  {id:'in', name:'India',       city:'Mumbai',      tz:'Asia/Kolkata',        weekend:SS},
+  {id:'sg', name:'Singapore',   city:'Singapore',   tz:'Asia/Singapore',      weekend:SS},
+  {id:'jp', name:'Japan',       city:'Tokyo',       tz:'Asia/Tokyo',          weekend:SS},
+  {id:'au', name:'Australia East', city:'Sydney',   tz:'Australia/Sydney',    weekend:SS},
+  {id:'br', name:'Brazil',      city:'São Paulo',   tz:'America/Sao_Paulo',   weekend:SS},
+];
+const DEFAULT_IDS = ['la','ny','ie','pl','eg','ph'];
+let ALL_TZ = [];
+try { ALL_TZ = Intl.supportedValuesOf('timeZone'); } catch(e) { ALL_TZ = CATALOG.map(z => z.tz); }
+const pad = n => String(n).padStart(2,'0');
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function fromCatalog(id){ const z = CATALOG.find(c => c.id === id); return z ? {id:z.id, name:z.name, city:z.city, tz:z.tz, weekend:[...z.weekend], start:540, end:1020, on:true} : null; }
+function fromTz(tz){
+  const city = tz.split('/').pop().replace(/_/g,' ');
+  return {id:'tz:'+tz, name:city, city:tz, tz, weekend:[...SS], start:540, end:1020, on:true};
+}
+function validTz(tz){ try { new Intl.DateTimeFormat('en',{timeZone:tz}); return true; } catch(e) { return false; } }
+
+/* ---------- time helpers (Intl handles daylight saving) ---------- */
+const fmtCache = {};
+function parts(tz, ms){
+  const f = fmtCache[tz] || (fmtCache[tz] = new Intl.DateTimeFormat('en-GB',{timeZone:tz,hourCycle:'h23',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',weekday:'short'}));
+  const o = {};
+  for (const p of f.formatToParts(new Date(ms))) o[p.type] = p.value;
+  return {y:+o.year, mo:+o.month, d:+o.day, h:(+o.hour)%24, mi:+o.minute, wd:WD.indexOf(o.weekday)};
+}
+function offsetMin(tz, ms){
+  const p = parts(tz, ms);
+  return (Date.UTC(p.y,p.mo-1,p.d,p.h,p.mi) - Math.floor(ms/60000)*60000)/60000;
+}
+function zonedMidnight(tz, dateStr){
+  const [y,m,d] = dateStr.split('-').map(Number);
+  const guess = Date.UTC(y,m-1,d);
+  let t = guess - offsetMin(tz, guess)*60000;
+  t = guess - offsetMin(tz, t)*60000;
+  return t;
+}
+const dateStrOf = p => `${p.y}-${pad(p.mo)}-${pad(p.d)}`;
+function fmtTime(h, mi){
+  if (!state.hour12) return `${pad(h)}:${pad(mi)}`;
+  const hh = h % 12 === 0 ? 12 : h % 12;
+  return `${hh}:${pad(mi)}${h < 12 ? 'am' : 'pm'}`;
+}
+function fmtMin(m){ return m === 1440 ? (state.hour12 ? '12:00am' : '24:00') : fmtTime(Math.floor(m/60)%24, m%60); }
+function shortHour(h){
+  if (!state.hour12) return pad(h);
+  if (h === 0) return '12a';
+  if (h === 12) return '12p';
+  return h < 12 ? h + 'a' : (h-12) + 'p';
+}
+const inRange = (m,s,e) => s < e ? (m >= s && m < e) : (m >= s || m < e);
+function classify(row, ms){
+  const p = parts(row.tz, ms), m = p.h*60 + p.mi;
+  const s = row.start, e = row.end % 1440;
+  let cls = 'off';
+  if (inRange(m, s, e === s ? s+1 : e)) cls = 'work';
+  else if (inRange(m, (s-120+1440)%1440, s) || inRange(m, e, (e+120)%1440)) cls = 'shoulder';
+  return {cls, weekend: row.weekend.includes(p.wd), p};
+}
+function meetingStatus(row, startMs, dur){
+  let worst = 'ok';
+  for (let t = 0; t < dur; t += 15){
+    const c = classify(row, startMs + t*60000);
+    if (c.weekend) return 'weekend';
+    if (c.cls === 'off') worst = 'night';
+    else if (c.cls === 'shoulder' && worst === 'ok') worst = 'edge';
+  }
+  return worst;
+}
+
+/* ---------- state ---------- */
+let saved = null;
+try { saved = JSON.parse(localStorage.getItem('nexio-meeting-planner') || 'null'); } catch(e) {}
+const state = Object.assign({ rows: DEFAULT_IDS.map(fromCatalog), base:'ie', hour12:false, duration:60 }, saved || {});
+state.rows = state.rows.map(r => {
+  const def = fromCatalog(r.id) || (r.tz ? fromTz(r.tz) : null);
+  return def ? Object.assign(def, r) : null;
+}).filter(r => r && validTz(r.tz));
+if (!state.rows.length) state.rows = DEFAULT_IDS.map(fromCatalog);
+if (!state.rows.some(r => r.id === state.base)) state.base = state.rows[0].id;
+function save(){
+  try { localStorage.setItem('nexio-meeting-planner', JSON.stringify({rows:state.rows, base:state.base, hour12:state.hour12, duration:state.duration})); } catch(e) {}
+}
+const baseRow = () => state.rows.find(r => r.id === state.base) || state.rows[0];
+function setNow(){
+  const p = parts(baseRow().tz, Date.now());
+  state.date = dateStrOf(p);
+  state.cursor = Math.min(1440 - state.duration, Math.round((p.h*60 + p.mi)/15)*15);
+}
+setNow();
+
+const SLOTS = 48, SLOT_MIN = 30;
+const dayStart = () => zonedMidnight(baseRow().tz, state.date);
+const cursorMs = () => dayStart() + state.cursor*60000;
+const visibleRows = () => state.rows.filter(r => r.on);
+
+/* ---------- timeline ---------- */
+const grid = $('#grid');
+function renderGrid(){
+  const start = dayStart(), base = baseRow();
+  let html = `<div></div><div class="track ruler">`;
+  for (let i = 0; i < SLOTS; i++){
+    const p = parts(base.tz, start + i*SLOT_MIN*60000);
+    html += `<div class="slot">${p.mi === 0 && p.h % 3 === 0 ? `<span class="hr">${shortHour(p.h)}</span>` : ''}</div>`;
+  }
+  html += `</div>`;
+  state.rows.forEach((row, idx) => {
+    if (!row.on) return;
+    html += `<div class="label"><span class="nm"><button class="x" data-remove="${idx}" aria-label="Remove ${esc(row.name)}" title="Remove">×</button><b title="${esc(row.city)}">${esc(row.name)}</b></span><span class="now"><span class="t" data-t="${idx}"></span><span class="d" data-d="${idx}"></span></span></div><div class="track">`;
+    for (let i = 0; i < SLOTS; i++){
+      const c = classify(row, start + i*SLOT_MIN*60000), p = c.p;
+      const ds = (p.h === 0 && p.mi === 0 && i > 0) ? ' daystart' : '';
+      html += `<div class="slot ${c.weekend ? 'weekend' : c.cls}${ds}" title="${esc(row.name)}: ${WD[p.wd]} ${fmtTime(p.h,p.mi)}"></div>`;
+    }
+    html += `</div>`;
+  });
+  const active = visibleRows();
+  html += `<div class="rlabel">Who's working</div><div class="track overlap">`;
+  for (let i = 0; i < SLOTS; i++){
+    const ms = start + i*SLOT_MIN*60000;
+    const n = active.filter(r => { const c = classify(r, ms); return c.cls === 'work' && !c.weekend; }).length;
+    const pct = active.length ? n/active.length*100 : 0;
+    html += `<div class="slot" title="${n} of ${active.length} in working hours"><div class="bar${n && n === active.length ? ' all' : ''}" style="height:${n ? Math.max(pct, 12) : 0}%"></div></div>`;
+  }
+  html += `</div><div class="overlay"><div class="band"><button class="pill" id="handle" role="slider" aria-label="Meeting start time" aria-valuemin="0" aria-valuemax="1440"></button></div></div>`;
+  grid.innerHTML = html;
+  bindHandle();
+  renderCursor();
+}
+
+/* ---------- cursor + summary ---------- */
+const LABELS = {ok:'Working hours', edge:'Early or late', night:'Outside hours', weekend:'Weekend'};
+function renderCursor(){
+  grid.style.setProperty('--p', state.cursor/1440);
+  grid.style.setProperty('--w', state.duration/1440);
+  const ms = cursorMs(), endMs = ms + state.duration*60000;
+  const base = baseRow(), bp = parts(base.tz, ms), be = parts(base.tz, endMs);
+  const h = $('#handle');
+  h.textContent = `${fmtTime(bp.h,bp.mi)}–${fmtTime(be.h,be.mi)}`;
+  h.setAttribute('aria-valuenow', state.cursor);
+  h.setAttribute('aria-valuetext', `${fmtTime(bp.h,bp.mi)} ${base.name}`);
+  const baseDay = Date.UTC(bp.y, bp.mo-1, bp.d);
+  let rowsHtml = '', lines = [], ok = 0, outside = [];
+  state.rows.forEach((row, idx) => {
+    if (!row.on) return;
+    const p = parts(row.tz, ms), pe = parts(row.tz, endMs);
+    const diff = Math.round((Date.UTC(p.y,p.mo-1,p.d) - baseDay)/864e5);
+    grid.querySelector(`[data-t="${idx}"]`).textContent = fmtTime(p.h, p.mi);
+    const dEl = grid.querySelector(`[data-d="${idx}"]`);
+    dEl.textContent = WD[p.wd];
+    dEl.className = 'd' + (diff ? ' shift' : '');
+    const st = meetingStatus(row, ms, state.duration);
+    if (st === 'ok') ok++; else outside.push(esc(row.name));
+    const range = `${fmtTime(p.h,p.mi)}–${fmtTime(pe.h,pe.mi)}`;
+    rowsHtml += `<tr><td>${esc(row.name)}</td><td>${range}${diff ? ` <span class="st">${WD[p.wd]}</span>` : ''}</td><td><span class="st"><i class="dot ${st}"></i>${LABELS[st]}</span></td></tr>`;
+    lines.push(`${row.name} (${row.city}): ${WD[p.wd]} ${p.d} ${MON[p.mo-1]}, ${range}`);
+  });
+  const active = visibleRows().length;
+  const durTxt = state.duration < 60 ? `${state.duration} min` : `${state.duration/60} hr`;
+  $('#mtitle').textContent = `${WD[bp.wd]} ${bp.d} ${MON[bp.mo-1]}, ${durTxt}`;
+  $('#verdict').innerHTML = !active ? 'Switch on at least one location under Working hours.'
+    : ok === active ? `<strong>Works for everyone.</strong>`
+    : `<strong>Works for ${ok} of ${active}.</strong> Outside hours for ${outside.join(', ')}.`;
+  $('#mtable').innerHTML = rowsHtml;
+  $('#copytext').value = `Meeting: ${WD[bp.wd]} ${bp.d} ${MON[bp.mo-1]} ${bp.y} (${durTxt})\n\n` + lines.join('\n');
+}
+function setCursor(min){
+  min = Math.round(min/15)*15;
+  state.cursor = Math.max(0, Math.min(1440 - state.duration, min));
+  renderCursor();
+}
+
+/* ---------- add / remove locations ---------- */
+function removeRow(idx){
+  if (state.rows.length <= 1){ toast('Keep at least one location.'); return; }
+  const ms = cursorMs();
+  const [gone] = state.rows.splice(idx, 1);
+  if (gone.id === state.base){
+    state.base = state.rows[0].id;
+    const p = parts(state.rows[0].tz, ms);
+    state.date = dateStrOf(p);
+    state.cursor = Math.min(1440 - state.duration, p.h*60 + p.mi);
+  }
+  save(); renderAll();
+  toast(`Removed ${gone.name}.`);
+}
+function sortRows(){
+  const ms = cursorMs();
+  state.rows.sort((a,b) => offsetMin(a.tz, ms) - offsetMin(b.tz, ms));
+}
+function renderZoneList(){
+  const have = new Set(state.rows.map(r => r.tz));
+  const cat = CATALOG.filter(z => !have.has(z.tz)).map(z => `<option value="${esc(z.name)} (${esc(z.city)})"></option>`);
+  const rest = ALL_TZ.filter(tz => !have.has(tz)).map(tz => `<option value="${tz}"></option>`);
+  $('#zonelist').innerHTML = cat.join('') + rest.join('');
+}
+$('#addForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const q = $('#addInput').value.trim(); if (!q) return;
+  const ql = q.toLowerCase();
+  let row = null;
+  const cat = CATALOG.find(z => `${z.name} (${z.city})`.toLowerCase() === ql || z.name.toLowerCase() === ql || z.city.toLowerCase() === ql);
+  if (cat) row = fromCatalog(cat.id);
+  else {
+    const tz = ALL_TZ.find(t => t.toLowerCase() === ql) || ALL_TZ.find(t => t.split('/').pop().replace(/_/g,' ').toLowerCase() === ql);
+    if (tz) row = fromTz(tz);
+  }
+  if (!row){ $('#addHint').textContent = `Couldn't find "${q}". Pick a suggestion from the list or type a time zone like Europe/Madrid.`; return; }
+  if (state.rows.some(r => r.tz === row.tz)){ $('#addHint').textContent = `${row.name} is already on the planner.`; return; }
+  state.rows.push(row); sortRows();
+  $('#addInput').value = ''; $('#addHint').textContent = '';
+  save(); renderAll();
+  toast(`Added ${row.name}.`);
+});
+grid.addEventListener('click', e => {
+  const b = e.target.closest('[data-remove]'); if (b) removeRow(+b.dataset.remove);
+});
+
+/* ---------- working hours panel ---------- */
+function timeOpts(sel, from, to){
+  let h = '';
+  for (let m = from; m <= to; m += 30) h += `<option value="${m}"${m === sel ? ' selected' : ''}>${fmtMin(m)}</option>`;
+  return h;
+}
+function renderHours(){
+  $('#htbody').innerHTML = state.rows.map((row, idx) => {
+    const days = DAY_ORDER.map(d => `<button data-act="day" data-day="${d}" aria-pressed="${row.weekend.includes(d)}" aria-label="${WD[d]} is a weekend day" title="${WD[d]}">${WD[d][0]}</button>`).join('');
+    return `<tr data-idx="${idx}">
+      <td><button class="switch" role="switch" data-act="toggle" aria-checked="${row.on}" aria-label="Include ${esc(row.name)}"></button></td>
+      <td class="loc"><b>${esc(row.name)}</b><small>${esc(row.city)}</small></td>
+      <td><select data-act="start" aria-label="${esc(row.name)} day starts">${timeOpts(row.start, 0, 1410)}</select></td>
+      <td><select data-act="end" aria-label="${esc(row.name)} day ends">${timeOpts(row.end, 30, 1440)}</select></td>
+      <td class="hide-sm"><span class="days">${days}</span></td>
+      <td><button class="rm" data-act="remove" aria-label="Remove ${esc(row.name)}">Remove</button></td>
+    </tr>`;
+  }).join('');
+}
+$('#htbody').addEventListener('change', e => {
+  const tr = e.target.closest('tr'); if (!tr) return;
+  const row = state.rows[+tr.dataset.idx];
+  if (e.target.dataset.act === 'start') row.start = +e.target.value;
+  if (e.target.dataset.act === 'end') row.end = +e.target.value;
+  save(); renderGrid();
+});
+$('#htbody').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const idx = +b.closest('tr').dataset.idx, row = state.rows[idx], act = b.dataset.act;
+  if (act === 'remove'){ removeRow(idx); return; }
+  if (act === 'toggle') row.on = !row.on;
+  if (act === 'day'){
+    const d = +b.dataset.day;
+    row.weekend = row.weekend.includes(d) ? row.weekend.filter(x => x !== d) : [...row.weekend, d];
+  }
+  save(); renderAll();
+});
+$('#hoursBtn').onclick = () => {
+  const panel = $('#hours'), open = panel.hidden;
+  panel.hidden = !open;
+  $('#hoursBtn').setAttribute('aria-expanded', open);
+};
+
+/* ---------- interaction ---------- */
+let dragging = false;
+function minutesAt(e){
+  const r = grid.querySelector('.track').getBoundingClientRect();
+  const f = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+  return f*1440 - state.duration/2;
+}
+grid.addEventListener('pointerdown', e => {
+  if (!e.target.closest('.track, .pill')) return;
+  dragging = true;
+  try { grid.setPointerCapture(e.pointerId); } catch(err) {}
+  setCursor(minutesAt(e));
+  e.preventDefault();
+});
+grid.addEventListener('pointermove', e => { if (dragging) setCursor(minutesAt(e)); });
+['pointerup','pointercancel'].forEach(t => grid.addEventListener(t, () => { dragging = false; }));
+function bindHandle(){
+  $('#handle').addEventListener('keydown', e => {
+    const step = e.shiftKey ? 60 : 15;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowUp'){ setCursor(state.cursor + step); e.preventDefault(); }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowDown'){ setCursor(state.cursor - step); e.preventDefault(); }
+    if (e.key === 'Home'){ setCursor(0); e.preventDefault(); }
+    if (e.key === 'End'){ setCursor(1440); e.preventDefault(); }
+  });
+}
+function changeBase(id){
+  const ms = cursorMs();
+  state.base = id;
+  const p = parts(baseRow().tz, ms);
+  state.date = dateStrOf(p);
+  state.cursor = Math.min(1440 - state.duration, p.h*60 + p.mi);
+  save(); renderAll();
+}
+function renderControls(){
+  $('#date').value = state.date;
+  $('#base').innerHTML = state.rows.map(r => `<option value="${esc(r.id)}"${r.id === state.base ? ' selected' : ''}>${esc(r.name)}</option>`).join('');
+  document.querySelectorAll('#dur button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.d === state.duration));
+  document.querySelectorAll('#clock button').forEach(b => b.setAttribute('aria-pressed', (b.dataset.c === '12') === state.hour12));
+}
+function renderAll(){ renderControls(); renderHours(); renderZoneList(); renderGrid(); }
+function shiftDate(n){
+  const [y,m,d] = state.date.split('-').map(Number);
+  const t = new Date(Date.UTC(y, m-1, d + n));
+  state.date = `${t.getUTCFullYear()}-${pad(t.getUTCMonth()+1)}-${pad(t.getUTCDate())}`;
+  renderAll();
+}
+$('#prevDay').onclick = () => shiftDate(-1);
+$('#nextDay').onclick = () => shiftDate(1);
+$('#date').onchange = e => { if (e.target.value){ state.date = e.target.value; renderAll(); } };
+$('#nowBtn').onclick = () => { setNow(); renderAll(); };
+$('#base').onchange = e => changeBase(e.target.value);
+$('#dur').onclick = e => {
+  const b = e.target.closest('button'); if (!b) return;
+  state.duration = +b.dataset.d;
+  state.cursor = Math.min(state.cursor, 1440 - state.duration);
+  save(); renderControls(); renderCursor();
+};
+$('#clock').onclick = e => {
+  const b = e.target.closest('button'); if (!b) return;
+  state.hour12 = b.dataset.c === '12';
+  save(); renderAll();
+};
+$('#bestBtn').onclick = () => {
+  const start = dayStart(), active = visibleRows();
+  if (!active.length) return;
+  let best = null;
+  for (let s = 0; s <= 1440 - state.duration; s += 15){
+    const sts = active.map(r => meetingStatus(r, start + s*60000, state.duration));
+    const score = sts.filter(x => x === 'ok').length*10 + sts.filter(x => x === 'edge').length*3 - sts.filter(x => x === 'night').length*4;
+    const dist = Math.abs(s - state.cursor);
+    if (!best || score > best.score || (score === best.score && dist < best.dist)) best = {s, score, dist};
+  }
+  setCursor(best.s);
+  toast('Moved to the best time for this day.');
+};
+function toast(msg){ const t = $('#toast'); t.textContent = msg; clearTimeout(toast._t); toast._t = setTimeout(() => t.textContent = '', 2800); }
+$('#copyBtn').onclick = async () => {
+  const ta = $('#copytext');
+  try { await navigator.clipboard.writeText(ta.value); toast('Copied.'); return; } catch(e) {}
+  try { ta.select(); if (document.execCommand('copy')) { toast('Copied.'); return; } } catch(e) {}
+  ta.select(); toast('Text selected. Press Ctrl+C to copy.');
+};
+
+renderAll();
+})();
+</script>
+</body>
+</html>
